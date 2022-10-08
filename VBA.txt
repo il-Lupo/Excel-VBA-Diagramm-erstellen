@@ -1,0 +1,96 @@
+Option Explicit
+
+Sub Datumsangaben_hinzu(n As Integer, WS As Worksheet, Last As Integer)
+    Dim End_ As Integer
+    End_ = Last + n
+    Dim i As Integer
+    Dim currentDate As Variant
+    currentDate = WS.Cells(Last, 1).Value
+    
+    For i = (Last + 1) To End_
+        currentDate = DateAdd("d", 1, currentDate)
+        WS.Cells(i, 1).Value = currentDate
+        WS.Cells.NumberFormat = "dd.mm.yyyy"
+    Next i
+End Sub
+
+Sub Diagramm_erstellen(WS As Worksheet, Last As Integer)
+    
+    WS.Range("B2", "B" & CStr(Last + 2)).NumberFormat = "0" ' Absichtlich 2
+    
+    Dim Diagramm As Chart
+    Set Diagramm = WS.Shapes.AddChart2( _
+    Style:=-1, _
+    XlChartType:=xlLineMarkers, _
+    Left:=190, _
+    Top:=3, _
+    Width:=1000, _
+    Height:=500, _
+    NewLayout:=True).Chart
+    
+    Diagramm.SetSourceData Source:=WS.Range("A2", "B" & CStr(Last + 1))
+    
+    'Diagramm.HasTitle = True
+    'Diagramm.ChartTitle.Select
+    'Diagramm.ChartTitle.Text = "Abonnenten"
+    Diagramm.HasTitle = False
+    
+    Diagramm.HasLegend = False
+    
+    Diagramm.Parent.Border.Color = 0 ' 0 = schwarz
+    Diagramm.Parent.Border.Weight = 3
+
+'y-Achse
+    With Diagramm.Axes(xlValue)
+         .HasTitle = True
+         .AxisTitle.Text = "Anzahl Abos"
+         .AxisTitle.Font.Size = 11
+         .AxisTitle.Font.Bold = True
+         .AxisTitle.Font.Name = "Segoe UI"
+     End With
+'x-Achse
+    With Diagramm.Axes(xlCategory)
+         .HasTitle = True
+         .AxisTitle.Text = "Datum"
+         .AxisTitle.Font.Size = 11
+         .AxisTitle.Font.Bold = True
+         .AxisTitle.Font.Name = "Segoe UI"
+         .AxisBetweenCategories = False
+     End With
+    
+    Dim Achse As Axis
+    For Each Achse In Diagramm.Axes()
+        Achse.TickLabels.Font.Name = "Segoe UI"
+        Achse.TickLabels.Font.Size = 11
+        Achse.TickLabels.Font.Bold = True
+        Achse.MajorTickMark = xlTickMarkCross
+        Achse.Border.Color = 0 ' schwarz
+        Achse.Border.LineStyle = 0
+        Achse.Border.Weight = 2
+    Next Achse
+    'Diagramm.SeriesCollection(1).Delete ' VBA hat eine unnötige Serie prodzuiert. Diese muss weg!
+    Diagramm.SeriesCollection(1).MarkerBackgroundColor = RGB(0, 0, 170)
+    Diagramm.SeriesCollection(1).MarkerForegroundColor = RGB(0, 0, 170)
+    Diagramm.SeriesCollection(1).Format.Line.Visible = msoFalse
+    
+End Sub
+
+Sub Diagrammbereich_aendern(WS As Worksheet, Last As Integer)
+     WS.Range("B2", "B" & CStr(Last + 2)).NumberFormat = "0" ' Absichtlich 2
+     
+     Dim Diag As ChartObject
+     Set Diag = WS.ChartObjects(1)
+     Diag.Chart.SetSourceData Source:=WS.Range("A2", "B" & CStr(Last + 1))
+End Sub
+
+Sub Makro1()
+    Dim WS As Worksheet
+    Set WS = Sheets("Gesamt")
+    WS.Select
+    Dim Last As Integer
+    Last = WS.Cells(Rows.Count, 1).End(xlUp).Row
+    
+    Datumsangaben_hinzu 1, WS, Last
+    'Diagramm_erstellen WS, Last
+    Diagrammbereich_aendern WS, Last
+End Sub
